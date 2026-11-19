@@ -128,6 +128,6 @@ public class TextDecodingTests
     [Fact]
     public void OldWesternServersThatSendLatin1AreRead()
     {
-        Assert.Equal("Café Bar", TextDecoding.Decode(new byte[] { 0x43, 0x61, 0x66, 0xE9, 0x20, 0x42, 0x61, 0x72 }));
+        Assert.Equal("Caf\u00e9 Bar", TextDecoding.Decode(new byte[] { 0x43, 0x61, 0x66, 0xE9, 0x20, 0x42, 0x61, 0x72 }));
     }
 }
