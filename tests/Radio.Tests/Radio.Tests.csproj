@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ToolkitDll Condition="'$(ToolkitDll)' == ''">D:\devnew\game-mods\SurvivalLog\mods\sl-exiled-toolkit\src\ExiledToolkit\bin\Release\ExiledToolkit.dll</ToolkitDll>
+    <!-- Exiled's Toolkit's source folder, the one its built DLL sits two folders under (bin\Release). -->
+    <ToolkitSrc>$([System.IO.Path]::GetDirectoryName($([System.IO.Path]::GetDirectoryName($([System.IO.Path]::GetDirectoryName('$(ToolkitDll)'))))))</ToolkitSrc>
+  </PropertyGroup>
+
+  <!-- The pure core is compiled straight in, with the Toolkit's plain helpers it uses, so the tests need none of the game or BepInEx assemblies. -->
+  <ItemGroup>
+    <Compile Include="..\..\src\Radio\Core\*.cs" Link="Core\%(Filename)%(Extension)" />
+    <Compile Include="$(ToolkitSrc)\Core\JsText.cs" Link="Toolkit\JsText.cs" />
+    <Compile Include="$(ToolkitSrc)\Core\Phrase.cs" Link="Toolkit\Phrase.cs" />
+  </ItemGroup>
+
+  <!-- The page script, as the plugin ships it, run in Jint with the Toolkit's page API against a fake Root.html and music screen. -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\src\Radio\page.js" LogicalName="Radio.page.js" Link="page.js" />
+    <EmbeddedResource Include="$(ToolkitSrc)\api.js" LogicalName="ExiledToolkit.api.js" Link="Toolkit\api.js" />
+    <EmbeddedResource Include="FakePage.js" LogicalName="Radio.Tests.FakePage.js" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Samples\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Jint" Version="4.17.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
+</Project>
