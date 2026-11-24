@@ -55,7 +55,7 @@
     <AssemblyMetadata Include="ModManager.Description" Value="Adds a Radio tab to the record player. Search thousands of internet radio stations from around the world, Chinese stations included, paste a stream link, or play the songs in your own music folder. The radio plays instead of the game's music, follows the music volume slider, needs power like a record, and gives the same morale as a record.&#10;为唱片机加入「收音机」标签页。可以搜索全世界成千上万个网络电台（包括中国电台），粘贴直播链接，或播放你自己音乐文件夹里的歌曲。收音机会代替游戏音乐播放，跟随音乐音量滑块，像唱片一样需要电力，也和唱片一样提升心态。" />
     <AssemblyMetadata Include="ModManager.Author" Value="AnExiledDev" />
     <AssemblyMetadata Include="ModManager.Category" Value="Audio" />
-    <AssemblyMetadata Include="ModManager.GameVersion" Value="1.1.21271" />
+    <AssemblyMetadata Include="ModManager.GameVersion" Value="1.1.21671" />
     <AssemblyMetadata Include="ModManager.Settings" Value="Live" />
     <AssemblyMetadata Include="ModManager.GitHub" Value="AnExiledDev/SurvivalLog-Radio" />
     <AssemblyMetadata Include="ModManager.Changelog" Value="https://github.com/AnExiledDev/SurvivalLog-Radio/blob/main/CHANGELOG.md" />
