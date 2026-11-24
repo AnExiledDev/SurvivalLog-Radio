@@ -11,6 +11,9 @@ public interface IRadioGame
     /// <summary>A save is loaded and its base can be read.</summary>
     bool IsInGame { get; }
 
+    /// <summary>The loaded save's file name, which names it among the player's saves. Null when none is loaded.</summary>
+    string? SaveKey { get; }
+
     /// <summary>The base has no power, so a record would refuse to play.</summary>
     bool IsPowerOff();
 
@@ -94,7 +97,13 @@ public interface IRadioFiles
 
     /// <summary>Writes the favorites off the game thread.</summary>
     void SaveFavorites(string json);
+
+    /// <summary>What was playing in each save, or null when nothing was saved yet.</summary>
+    string? LoadResume();
+
+    /// <summary>Writes what was playing in each save off the game thread.</summary>
+    void SaveResume(string json);
 }
 
 /// <summary>The settings the radio reads. The music folder is already a full path.</summary>
-public sealed record RadioSettings(int Volume, bool PlayWhileExploring, string MusicFolder, bool GiveMorale, double StreamMoraleMinutes);
+public sealed record RadioSettings(int Volume, bool PlayWhileExploring, string MusicFolder, bool GiveMorale, double StreamMoraleMinutes, bool ResumeOnLoad = true);

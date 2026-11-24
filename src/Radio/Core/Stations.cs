@@ -256,12 +256,26 @@ public sealed class Favorites
 
     public string ToJson()
     {
-        var items = _stations.Select(s => new Dictionary<string, object>
-        {
-            ["id"] = s.Id, ["name"] = s.Name, ["url"] = s.Url, ["country"] = s.Country, ["codec"] = s.Codec, ["bitrate"] = s.Bitrate,
-        });
+        return JsonSerializer.Serialize(_stations.Select(Item), new JsonSerializerOptions { WriteIndented = true });
+    }
 
-        return JsonSerializer.Serialize(items, new JsonSerializerOptions { WriteIndented = true });
+    /// <summary>One station as the favorites file writes it.</summary>
+    internal static Dictionary<string, object> Item(Station s) => new()
+    {
+        ["id"] = s.Id, ["name"] = s.Name, ["url"] = s.Url, ["country"] = s.Country, ["codec"] = s.Codec, ["bitrate"] = s.Bitrate,
+    };
+
+    /// <summary>A station the way Item wrote it, or null when it has no id or link.</summary>
+    internal static Station? ReadStation(JsonElement item)
+    {
+        var id = Text(item, "id");
+        var url = Text(item, "url");
+
+        if (id.Length == 0 || url.Length == 0) return null;
+
+        var bitrate = item.TryGetProperty("bitrate", out var b) && b.ValueKind == JsonValueKind.Number && b.TryGetInt32(out var n) ? n : 0;
+
+        return new Station(id, Text(item, "name"), url, Text(item, "country"), Text(item, "codec"), bitrate);
     }
 
     /// <summary>The saved list; an unreadable file gives an empty one, and the caller keeps the file as it was.</summary>
@@ -278,13 +292,7 @@ public sealed class Favorites
 
             foreach (var item in document.RootElement.EnumerateArray())
             {
-                var id = Get(item, "id");
-                var url = Get(item, "url");
-
-                if (id.Length == 0 || url.Length == 0) continue;
-
-                var bitrate = item.TryGetProperty("bitrate", out var b) && b.ValueKind == JsonValueKind.Number && b.TryGetInt32(out var n) ? n : 0;
-                stations.Add(new Station(id, Get(item, "name"), url, Get(item, "country"), Get(item, "codec"), bitrate));
+                if (ReadStation(item) is { } station) stations.Add(station);
             }
 
             return new Favorites(stations);
@@ -296,5 +304,5 @@ public sealed class Favorites
         }
     }
 
-    private static string Get(JsonElement item, string name) => item.ValueKind == JsonValueKind.Object && item.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() ?? "" : "";
+    internal static string Text(JsonElement item, string name) => item.ValueKind == JsonValueKind.Object && item.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() ?? "" : "";
 }

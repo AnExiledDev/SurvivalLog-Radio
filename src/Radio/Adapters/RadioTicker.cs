@@ -61,7 +61,7 @@ internal sealed class RadioLoop
         Guard("checking the page", _checkPage);
         Guard("updating the radio", _updateSession);
         Guard("starting the sound", _startSound);
-        Guard("saving the stations", _reportSaveProblem);
+        Guard("saving the radio's files", _reportSaveProblem);
         Guard("saving the volume", _saveVolume);
     }
 
@@ -81,7 +81,7 @@ internal sealed class RadioLoop
 
     private void ReportSaveProblem()
     {
-        if (_files.TakeSaveProblem() is { } problem) _log("Couldn't save the stations: " + problem);
+        if (_files.TakeSaveProblem() is { } problem) _log("Couldn't save a Radio file in BepInEx\\config: " + problem);
     }
 
     /// <summary>Each step runs on its own, so one that breaks after a game update leaves the rest working.</summary>

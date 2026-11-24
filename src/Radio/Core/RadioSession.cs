@@ -47,6 +47,7 @@ public sealed class RadioSession
     private readonly Queue<PlayerEvent.SongStarts> _songStarts = new();
     private readonly Favorites _favorites;
     private readonly bool _canSaveFavorites;
+    private readonly ResumeList _resumes;
 
     private RadioSettings _settings;
     private float _nextCheckAt;
@@ -66,6 +67,15 @@ public sealed class RadioSession
     private int _song = -1;
     private string _title = "";
     private StatusLine _status = StatusLine.None;
+
+    /// <summary>The save being played, known from its first load on. Null at the main menu.</summary>
+    private string? _saveKey;
+
+    /// <summary>The new ids of the load going on, from just before the game resets the record players.</summary>
+    private Func<long, long?>? _loadIds;
+
+    /// <summary>A song to pick up once the music folder is scanned, with the record player's id in this load.</summary>
+    private ResumePoint? _waitingSong;
 
     private bool _isScreenOpen;
     private long _screenPlayerId = NoPlayer;
@@ -113,6 +123,7 @@ public sealed class RadioSession
         _log = log;
         _detail = detail;
         _favorites = Favorites.Parse(files.LoadFavorites(), out _canSaveFavorites);
+        _resumes = ResumeList.Parse(files.LoadResume());
 
         if (!_canSaveFavorites) log("The favorites file couldn't be read. It is left as it is, and stars won't be saved until it is fixed or deleted.");
 
@@ -263,6 +274,8 @@ public sealed class RadioSession
     /// <param name="newIdOf">The new id for an old one, or null when that agent isn't in the map being loaded.</param>
     public void OnIdsChanged(Func<long, long?> newIdOf)
     {
+        _loadIds = newIdOf;
+
         if (_playerId != NoPlayer && newIdOf(_playerId) is { } playerId) _playerId = playerId;
 
         if (_screenPlayerId != NoPlayer && newIdOf(_screenPlayerId) is { } screenPlayerId) _screenPlayerId = screenPlayerId;
@@ -271,8 +284,16 @@ public sealed class RadioSession
     /// <summary>A save loaded or a trip started or ended. The game turns every record player off when that happens.</summary>
     public void OnPlayersReset(bool isAtHome)
     {
+        var loadIds = _loadIds;
+        _loadIds = null;
         _isAtHome = isAtHome;
         _isSwitchedOn = false;
+
+        if (PickUpSave(loadIds))
+        {
+            Send();
+            return;
+        }
 
         if (_source == null) return;
 
@@ -301,6 +322,11 @@ public sealed class RadioSession
     /// <summary>Back at the main menu. The home music stays off there; anything else the game asked for plays.</summary>
     public void OnLeftGame()
     {
+        KeepForNextLoad();
+        _saveKey = null;
+        _loadIds = null;
+        _waitingSong = null;
+
         if (_source != null) StopRadio(switchOff: false, restoreMusic: _hold.Held is not HeldMusic.Home);
 
         _status = StatusLine.None;
@@ -321,6 +347,7 @@ public sealed class RadioSession
     /// <summary>The game is closing.</summary>
     public void Shutdown()
     {
+        KeepForNextLoad();
         StopRadio(switchOff: false, restoreMusic: false);
         CancelList();
         CancelScan();
@@ -449,6 +476,8 @@ public sealed class RadioSession
         }
 
         if (_list.Tab == Tab.Music) _list = MusicView(_music);
+
+        PlayWaitingSong();
     }
 
     /// <summary>The music folder setting changed, so the songs found before are from the wrong folder.</summary>
@@ -456,6 +485,7 @@ public sealed class RadioSession
     {
         CancelScan();
         _music = null;
+        _waitingSong = null;
 
         if (_hasList && _list.Tab == Tab.Music) ShowMusic();
     }
@@ -515,6 +545,7 @@ public sealed class RadioSession
         }
 
         StopReading();
+        _waitingSong = null;
 
         if (_isSwitchedOn && _playerId != playerId)
         {
@@ -696,6 +727,127 @@ public sealed class RadioSession
 
         Start(source is Source.OfFolder folder ? folder with { First = Math.Max(_song, 0) } : source, _playerId);
     }
+
+    /// <summary>
+    /// The first load of a save picks up the station or song that played when the player last left it. At home the
+    /// record player has a new id from this load. On a trip it keeps the id it had, and the way home gives it a new one.
+    /// </summary>
+    /// <returns>True when the radio is back on, or waiting to play when the player gets home.</returns>
+    private bool PickUpSave(Func<long, long?>? loadIds)
+    {
+        var key = _game.SaveKey;
+
+        if (key == null || key == _saveKey) return false;
+
+        _saveKey = key;
+        var point = _resumes.Get(key);
+
+        if (point == null || _source != null || !_settings.ResumeOnLoad) return false;
+
+        if ((_isAtHome ? loadIds?.Invoke(point.PlayerId) : point.PlayerId) is not { } playerId)
+        {
+            _detail("The record player the radio last played on in this save is gone, so the radio stays off.");
+            return false;
+        }
+
+        if (_isAtHome && _game.IsPowerOff())
+        {
+            _detail("The base has no power, so the radio stays off after the load.");
+            return false;
+        }
+
+        if (point.Station == null)
+        {
+            WaitForSong(point with { PlayerId = playerId });
+            return false;
+        }
+
+        PickUp(new Source.OfStation(point.Station), playerId);
+
+        return _source != null;
+    }
+
+    private void PickUp(Source source, long playerId)
+    {
+        _detail("picking up " + NameOf(source) + " from the last time in this save");
+
+        if (_isAtHome || _settings.PlayWhileExploring)
+        {
+            Start(source, playerId);
+            return;
+        }
+
+        _source = source;
+        _playerId = playerId;
+        _song = source is Source.OfFolder folder ? folder.First : -1;
+        Suspend();
+    }
+
+    private void WaitForSong(ResumePoint point)
+    {
+        _waitingSong = point;
+
+        if (_music != null)
+        {
+            PlayWaitingSong();
+            return;
+        }
+
+        if (_scanTask != null) return;
+
+        _scanCancel = new CancellationTokenSource();
+        _scanTask = _files.ScanMusic(_settings.MusicFolder, _scanCancel.Token);
+        _nextCheckAt = 0;
+    }
+
+    private void PlayWaitingSong()
+    {
+        var point = _waitingSong;
+        var music = _music;
+
+        if (point == null || music == null) return;
+
+        _waitingSong = null;
+        var index = IndexOfSong(music, point.Song);
+
+        if (index < 0)
+        {
+            _detail("The song that last played in this save isn't in the music folder any more, so the radio stays off: " + point.Song);
+            return;
+        }
+
+        PickUp(new Source.OfFolder(music, index), point.PlayerId);
+    }
+
+    private static int IndexOfSong(MusicList music, string path)
+    {
+        for (var i = 0; i < music.Paths.Count; i++)
+        {
+            if (string.Equals(music.Paths[i], path, StringComparison.OrdinalIgnoreCase)) return i;
+        }
+
+        return -1;
+    }
+
+    /// <summary>Leaving the save: what plays now is what its next load picks up. A song still waiting on the scan stays as it was.</summary>
+    private void KeepForNextLoad()
+    {
+        var key = _saveKey;
+
+        if (key == null) return;
+
+        var point = PointNow();
+        var isChanged = point != null ? _resumes.Set(key, point) : _waitingSong == null && _resumes.Remove(key);
+
+        if (isChanged) _files.SaveResume(_resumes.ToJson());
+    }
+
+    private ResumePoint? PointNow() => _source switch
+    {
+        Source.OfStation { Station: var station } => new ResumePoint(_playerId, station, ""),
+        Source.OfFolder folder => new ResumePoint(_playerId, null, folder.Music.Paths[_song >= 0 && _song < folder.Music.Paths.Count ? _song : folder.First]),
+        _ => null,
+    };
 
     private void FollowExploringSetting()
     {

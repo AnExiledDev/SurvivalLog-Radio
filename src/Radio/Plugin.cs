@@ -17,7 +17,7 @@ namespace Radio;
 [BepInDependency(ToolkitGuid, ToolkitVersion)]
 public sealed class Plugin : BasePlugin
 {
-    internal const string Version = "0.1.0";
+    internal const string Version = "0.1.1";
 
     private const string Guid = "com.dev.survivallog.radio";
 
@@ -27,6 +27,7 @@ public sealed class Plugin : BasePlugin
 
     private const string LogFileName = "radio.log";
     private const string FavoritesFileName = "radio-favorites.json";
+    private const string ResumeFileName = "radio-resume.json";
     private const string DefaultMusicFolder = "Radio Music";
 
     /// <summary>The name the page script hands its tab to the Toolkit's UI size with.</summary>
@@ -46,6 +47,9 @@ public sealed class Plugin : BasePlugin
         var musicFolder = Config.Bind("General", "MusicFolder", "",
             "The folder the My music tab plays songs from, subfolders included. Leave it empty to use BepInEx\\Radio Music, which is made the first time you open My music. It plays mp3, m4a, aac, wma, wav, flac and mp4 files, up to 5000 songs.\n" +
             "「我的音乐」标签页播放歌曲的文件夹，包括其中的子文件夹。留空则使用 BepInEx\\Radio Music，第一次打开「我的音乐」时会自动创建。支持 mp3、m4a、aac、wma、wav、flac 和 mp4 文件，最多 5000 首。");
+        var isResumingOnLoad = Config.Bind("General", "ResumeOnLoad", true,
+            "When true, loading a save plays the station or song that was playing when you last left that save, on the same record player. When false, the radio is off after every load, the way records are.\n" +
+            "设为 true 时，载入存档后会在同一台唱片机上接着播放上次离开该存档时正在播放的电台或歌曲。设为 false 时，每次载入后收音机都是关着的，和唱片一样。");
         var isGivingMorale = Config.Bind("Morale", "GiveMorale", true,
             "When true, listening to the radio at home gives morale the way a record does. A song from your music folder gives it when it plays to the end, and a station gives it after StreamMoraleMinutes of listening. Records only give morale once a day, and the radio counts toward that same once a day.\n" +
             "设为 true 时，在家听收音机会像听唱片一样提升心态。音乐文件夹里的歌完整播放后提升，电台在收听 StreamMoraleMinutes 分钟后提升。唱片每天只提升一次心态，收音机和唱片共用这一次。");
@@ -66,12 +70,13 @@ public sealed class Plugin : BasePlugin
             isPlayingWhileExploring.Value,
             MusicFolderOf(musicFolder.Value),
             isGivingMorale.Value,
-            streamMoraleMinutes.Value);
+            streamMoraleMinutes.Value,
+            isResumingOnLoad.Value);
 
         var network = new Network();
         var output = new FmodOutput(log.Write);
         var page = new RadioPage(log.Write);
-        var files = new RadioFiles(Path.Combine(Paths.ConfigPath, FavoritesFileName));
+        var files = new RadioFiles(Path.Combine(Paths.ConfigPath, FavoritesFileName), Path.Combine(Paths.ConfigPath, ResumeFileName));
         var savedVolume = new SavedVolume(volume);
         var hold = new MusicHold();
         var session = new RadioSession(
@@ -93,8 +98,8 @@ public sealed class Plugin : BasePlugin
         {
             var settings = ReadSettings();
             session.UseSettings(settings);
-            log.WriteFileOnly($"volume {settings.Volume}, play while exploring {settings.PlayWhileExploring}, music folder {settings.MusicFolder}, morale {settings.GiveMorale} every {settings.StreamMoraleMinutes} min");
-        }, volume, isPlayingWhileExploring, musicFolder, isGivingMorale, streamMoraleMinutes);
+            log.WriteFileOnly($"volume {settings.Volume}, play while exploring {settings.PlayWhileExploring}, music folder {settings.MusicFolder}, morale {settings.GiveMorale} every {settings.StreamMoraleMinutes} min, resume on load {settings.ResumeOnLoad}");
+        }, volume, isPlayingWhileExploring, musicFolder, isResumingOnLoad, isGivingMorale, streamMoraleMinutes);
 
         RadioHooks.Install(new PatchKit(new Harmony(Guid), log.Write), session, hold);
 

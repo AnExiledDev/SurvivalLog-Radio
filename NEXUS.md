@@ -17,6 +17,7 @@ Radio adds a Radio tab to the record player's music screen. Pick from thousands 
 [*][b]Works like a record[/b]: the record player you picked it on is switched on and uses power, the same as for a record. If the power goes out, the radio stops. Playing a record stops it too.[/*]
 [*][b]Morale[/b]: a song from your music folder gives morale when it plays to the end, like a record. A station gives the same morale after you listen for a while. You set how long, 3 minutes by default. The game gives music morale once a day, and the radio counts toward that same once a day.[/*]
 [*][b]Keeps playing when you go out[/b]: by default the radio keeps playing while you explore. A setting pauses it while you're away instead.[/*]
+[*][b]Picks up where you left off[/b]: load a save and the station or song you last left playing in it plays again, even after you restart the game. A setting turns this off.[/*]
 [*][b]Its own volume[/b]: the volume slider on the Radio tab sets the radio's volume, and the game's music volume turns it down on top of that.[/*]
 [*][b]Lost signal[/b]: if a station drops, the radio tries again by itself and says so on the status line.[/*]
 [/list]
@@ -29,7 +30,7 @@ Works in English and Chinese. The tab, the buttons and the messages follow the g
 [*]The station lists and search need an internet connection that can reach radio-browser.info. If it can't be reached, pasted links and My music still work.[/*]
 [*]Stations far away can be slow. From China, many stations outside China may be slow or not play. Try another station.[/*]
 [*]Stations that send Ogg or Opus are left off the lists, because most Windows PCs can't play them. Stations that send AC-3 can't be played.[/*]
-[*]Quitting to the main menu stops the radio, and it is off when you load a game.[/*]
+[*]After a load, the radio only comes back on if that record player is in the save and the base has power.[/*]
 [*]On an N edition of Windows, install Microsoft's Media Feature Pack first. Radio uses the decoders that come with Windows.[/*]
 [*]Playing a station from the lists tells Radio Browser it was played. That is how the Popular list is counted.[/*]
 [/list]
@@ -60,7 +61,7 @@ Works in English and Chinese. The tab, the buttons and the messages follow the g
 Delete [font=Courier New]Radio.dll[/font] from the [font=Courier New]BepInEx\plugins[/font] folder. Your songs in [font=Courier New]BepInEx\Radio Music[/font] are never deleted by the mod.
 
 [size=5]Configuration[/size]
-To change settings, edit [font=Courier New]BepInEx\config\com.dev.survivallog.radio.cfg[/font] while the game is closed, or do it in game on the Mod Manager's Mods screen, where changes take effect at once (see [url=https://github.com/AnExiledDev/SurvivalLog-Radio/blob/main/CONFIG.md]CONFIG.md[/url] for every setting). You can set the volume, whether the radio plays while you explore, your music folder, the morale, and how long a station takes to give it.
+To change settings, edit [font=Courier New]BepInEx\config\com.dev.survivallog.radio.cfg[/font] while the game is closed, or do it in game on the Mod Manager's Mods screen, where changes take effect at once (see [url=https://github.com/AnExiledDev/SurvivalLog-Radio/blob/main/CONFIG.md]CONFIG.md[/url] for every setting). You can set the volume, whether the radio plays while you explore, whether it picks up where you left off after a load, your music folder, the morale, and how long a station takes to give it.
 
 [size=5]Feedback[/size]
 Found a bug or have an idea? Come say hi in the [url=https://discord.gg/pDrQtqbZgb]unofficial modding Discord for Survival Log[/url], or post in this page's Posts tab. For bugs, please include [font=Courier New]BepInEx\LogOutput.log[/font], and [font=Courier New]BepInEx\radio.log[/font] if you turned on [font=Courier New]LogToFile[/font]. If a station won't play, include its name or link.
@@ -85,6 +86,7 @@ Radio 在唱片机的音乐界面加入「收音机」标签页。可以从全�
 [*][b]和唱片一样[/b]：你选电台的那台唱片机会打开并耗电，和放唱片时一样。停电时收音机会停止。放唱片也会让收音机停止。[/*]
 [*][b]心态[/b]：音乐文件夹里的歌完整播放后会提升心态，和唱片一样。电台听一段时间后也会提升同样的心态，时长可以自己设置，默认 3 分钟。游戏每天只给一次音乐带来的心态，收音机和唱片共用这一次。[/*]
 [*][b]出门也能听[/b]：默认出门探索时收音机继续播放。也可以在设置里改成离家时暂停。[/*]
+[*][b]接着上次播放[/b]：载入存档后，上次离开这个存档时正在播放的电台或歌曲会接着播放，重启游戏后也一样。可以在设置里关掉。[/*]
 [*][b]单独的音量[/b]：「收音机」标签页上的音量滑块调收音机的音量，游戏的音乐音量会在此基础上再调低。[/*]
 [*][b]信号中断[/b]：电台断线时，收音机会自动重连，并在状态栏里显示。[/*]
 [/list]
@@ -97,7 +99,7 @@ Radio 不会修改游戏文件，也不会往存档里添加任何内容，随�
 [*]电台列表和搜索需要能访问 radio-browser.info 的网络。访问不了时，粘贴的链接和「我的音乐」仍然可以用。[/*]
 [*]距离远的电台可能会很慢。在中国，很多国外电台可能会卡顿或无法播放，换一个电台试试。[/*]
 [*]使用 Ogg 或 Opus 格式的电台不会出现在列表里，因为大多数 Windows 电脑播放不了。使用 AC-3 格式的电台无法播放。[/*]
-[*]退回主菜单时收音机会停止，载入游戏后是关着的。[/*]
+[*]载入存档后，只有存档里有那台唱片机、基地也有电时，收音机才会接着播放。[/*]
 [*]如果你用的是 Windows N 版，请先安装微软的 Media Feature Pack（媒体功能包）。Radio 使用 Windows 自带的解码器。[/*]
 [*]从列表播放电台时，会告诉 Radio Browser 这个电台被播放了。「热门」列表就是这样统计出来的。[/*]
 [/list]
@@ -127,7 +129,7 @@ Radio 不会修改游戏文件，也不会往存档里添加任何内容，随�
 从 [font=Courier New]BepInEx\plugins[/font] 文件夹中删除 [font=Courier New]Radio.dll[/font]。模组不会删除 [font=Courier New]BepInEx\Radio Music[/font] 里你的歌。
 
 [size=5]配置[/size]
-可以在游戏内 Mod Manager 的「模组」界面修改，改动立即生效。也可以在游戏关闭时编辑 [font=Courier New]BepInEx\config\com.dev.survivallog.radio.cfg[/font]。配置文件中每项设置都有中文说明，完整说明见 [url=https://github.com/AnExiledDev/SurvivalLog-Radio/blob/main/CONFIG.md]CONFIG.md[/url]（英文）。可以设置音量、出门探索时是否继续播放、音乐文件夹、是否提升心态，以及听电台多久后提升心态。
+可以在游戏内 Mod Manager 的「模组」界面修改，改动立即生效。也可以在游戏关闭时编辑 [font=Courier New]BepInEx\config\com.dev.survivallog.radio.cfg[/font]。配置文件中每项设置都有中文说明，完整说明见 [url=https://github.com/AnExiledDev/SurvivalLog-Radio/blob/main/CONFIG.md]CONFIG.md[/url]（英文）。可以设置音量、出门探索时是否继续播放、载入存档后是否接着播放、音乐文件夹、是否提升心态，以及听电台多久后提升心态。
 
 [size=5]反馈[/size]
 发现 bug 或有好点子？欢迎来 [url=https://discord.gg/pDrQtqbZgb]Survival Log 非官方模组 Discord[/url] 打个招呼，或在本页的「Posts」标签里发帖。报告 bug 时，请附上 [font=Courier New]BepInEx\LogOutput.log[/font]。如果打开了 [font=Courier New]LogToFile[/font]，也请附上 [font=Courier New]BepInEx\radio.log[/font]。如果某个电台播放不了，请附上它的名称或链接。

@@ -16,6 +16,7 @@ Open a record player the way you normally do. The music screen now has two tabs 
 - **Like a record**: the radio plays on the record player you picked it on, and that record player is switched on and uses power the way it does for a record. If the power goes out, the radio stops. Playing a record stops the radio, and so does stopping the record player.
 - **Morale**: a song from your music folder gives morale when it plays to the end, the same as a record. A station never ends, so it gives that morale after you listen for a while. You set how long with `StreamMoraleMinutes`, 3 minutes by default. The game gives music morale only once a day, and the radio counts toward that same once a day.
 - **Keeps playing when you go out**: by default the radio keeps playing while you explore. Turn off `PlayWhileExploring` and it pauses while you're away and comes back on when you get home.
+- **Picks up where you left off**: load a save and the station or song you last left playing in it plays again on the same record player, even after you restart the game. Turn off `ResumeOnLoad` and the radio is off after every load, the way records are.
 - **Lost signal**: if a station drops, the radio tries again by itself and says so on the status line. A station on a slow connection that keeps running out waits a little longer each time, so it stops less often.
 - **UI size**: Exiled's Toolkit's UI size setting draws the Radio tab bigger or smaller. Radio also has its own `UiScale` setting under Interface. At 0, the default, it follows the Toolkit's.
 
@@ -32,7 +33,7 @@ Radio does not edit game files and puts nothing in your save. You can remove it 
 - Stations that send Ogg or Opus are left off the lists, because most Windows PCs can't play them. A pasted Ogg or Opus link is still tried, and plays if Windows on your PC can play that format. Stations that send AC-3 can't be played.
 - Some stations send no song titles. Then the bar shows the station's name only.
 - Some stations play silence or send a web page instead of sound. The status line says when a link isn't a radio stream.
-- Quitting to the main menu stops the radio. It isn't saved, so it is off when you load a game.
+- After a load, the radio only comes back on if that record player is in the save and the base has power. A record player you built after the last save isn't in it.
 - The radio uses the decoders that come with Windows. On an N edition of Windows, install Microsoft's Media Feature Pack first.
 - Playing a station from the lists tells Radio Browser it was played. That is how the Popular list is counted.
 
@@ -55,7 +56,7 @@ Radio does not edit game files and puts nothing in your save. You can remove it 
 
 ## Uninstall
 
-Delete `Radio.dll` from the `BepInEx\plugins` folder. Radio puts nothing in your save, so there is nothing to do first. For a clean slate, also delete `BepInEx\config\com.dev.survivallog.radio.cfg`, your favorites in `BepInEx\config\radio-favorites.json`, and `BepInEx\radio.log`. Radio never deletes your songs, so the `BepInEx\Radio Music` folder is yours to keep or delete.
+Delete `Radio.dll` from the `BepInEx\plugins` folder. Radio puts nothing in your save, so there is nothing to do first. For a clean slate, also delete `BepInEx\config\com.dev.survivallog.radio.cfg`, your favorites in `BepInEx\config\radio-favorites.json`, what last played in each save in `BepInEx\config\radio-resume.json`, and `BepInEx\radio.log`. Radio never deletes your songs, so the `BepInEx\Radio Music` folder is yours to keep or delete.
 
 ## Configuration
 
@@ -67,7 +68,7 @@ See [CONFIG.md](CONFIG.md) for every setting.
 
 Built against BepInEx `6.0.0-be.788`.
 
-Check `BepInEx\LogOutput.log` for a line starting `===== Radio 0.1.0 started`. If a game hook could not be set up, a line starting `could not hook` follows it, and the Mod Manager shows the mod red.
+Check `BepInEx\LogOutput.log` for a line starting `===== Radio 0.1.1 started`. If a game hook could not be set up, a line starting `could not hook` follows it, and the Mod Manager shows the mod red.
 
 When a station stops for good, the log has a line with its name, `stopped:` and the reason. `Couldn't load the station list` means Radio Browser couldn't be reached. `The radio can't play into the game's music` means the sound couldn't be set up, and the radio stays off.
 

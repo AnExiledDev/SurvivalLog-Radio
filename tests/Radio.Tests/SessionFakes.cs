@@ -18,6 +18,8 @@ internal sealed class FakeGame : IRadioGame
 
     public bool IsInGame { get; set; } = true;
 
+    public string? SaveKey { get; set; } = "Save01";
+
     public bool HasPower { get; set; } = true;
 
     public HashSet<long> Players { get; } = new() { 1, 2 };
@@ -265,6 +267,12 @@ internal sealed class FakeFiles : IRadioFiles
     public string? LoadFavorites() => FavoritesFile;
 
     public void SaveFavorites(string json) => FavoritesFile = json;
+
+    public string? ResumeFile { get; set; }
+
+    public string? LoadResume() => ResumeFile;
+
+    public void SaveResume(string json) => ResumeFile = json;
 }
 
 internal static class PageJson

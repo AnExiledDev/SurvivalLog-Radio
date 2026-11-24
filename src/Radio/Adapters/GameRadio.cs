@@ -20,6 +20,8 @@ internal sealed class GameRadio : IRadioGame
 
     public GameRadio(Action<string> log) => _log = log;
 
+    public string? SaveKey => SaveSlot.CurrentKey();
+
     public bool IsInGame
     {
         get

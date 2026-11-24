@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.1
+
+- Loading a save plays the station or song you last left playing in it, on the same record player. Turn off `ResumeOnLoad` to keep the radio off after a load.
+
 ## 0.1.0
 
 - First version. The record player's music screen gets a Radio tab with internet radio stations from Radio Browser: popular stations, stations in China, stations in Chinese, search and favorites.

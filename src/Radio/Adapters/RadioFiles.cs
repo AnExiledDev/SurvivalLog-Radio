@@ -9,16 +9,17 @@ using UnityEngine;
 
 namespace Radio.Adapters;
 
-/// <summary>The radio's files on the player's PC: the music folder, the clipboard and the saved stations.</summary>
+/// <summary>The radio's files on the player's PC: the music folder, the clipboard, the favorites and what played in each save.</summary>
 internal sealed class RadioFiles : IRadioFiles
 {
-    private readonly string _favoritesPath;
-    private readonly object _saveLock = new();
-    private string? _waitingSave;
-    private Task? _saving;
-    private volatile string? _saveProblem;
+    private readonly SafeFile _favorites;
+    private readonly SafeFile _resume;
 
-    public RadioFiles(string favoritesPath) => _favoritesPath = favoritesPath;
+    public RadioFiles(string favoritesPath, string resumePath)
+    {
+        _favorites = new SafeFile(favoritesPath);
+        _resume = new SafeFile(resumePath);
+    }
 
     /// <summary>Runs off the game thread. A missing folder is made, so the player has somewhere to put songs.</summary>
     public Task<MusicList> ScanMusic(string folder, CancellationToken cancel) => Task.Run(() =>
@@ -54,71 +55,98 @@ internal sealed class RadioFiles : IRadioFiles
 
     public string ReadClipboard() => GUIUtility.systemCopyBuffer ?? "";
 
-    public string? LoadFavorites() => File.Exists(_favoritesPath) ? File.ReadAllText(_favoritesPath) : null;
+    public string? LoadFavorites() => _favorites.Read();
 
-    /// <summary>
-    /// Writes off the game thread, to a new file that then takes the old one's place, so a crash mid-write leaves the
-    /// old list. Saves that come in while one is writing collapse into the newest.
-    /// </summary>
-    public void SaveFavorites(string json)
-    {
-        lock (_saveLock)
-        {
-            _waitingSave = json;
+    public void SaveFavorites(string json) => _favorites.Write(json);
 
-            if (_saving != null) return;
+    public string? LoadResume() => _resume.Read();
 
-            _saving = Task.Run(WriteWaiting);
-        }
-    }
+    public void SaveResume(string json) => _resume.Write(json);
 
-    /// <summary>Why the last save failed, once. Main thread, so the reason reaches the log.</summary>
-    public string? TakeSaveProblem()
-    {
-        var problem = _saveProblem;
-
-        if (problem != null) _saveProblem = null;
-
-        return problem;
-    }
+    /// <summary>Why the last save of either file failed, once. Main thread, so the reason reaches the log.</summary>
+    public string? TakeSaveProblem() => _favorites.TakeProblem() ?? _resume.TakeProblem();
 
     /// <summary>The game is closing: give a save that is still writing a moment to finish.</summary>
     public void Finish(TimeSpan wait)
     {
-        Task? saving;
+        _favorites.Finish(wait);
+        _resume.Finish(wait);
+    }
+}
 
-        lock (_saveLock) saving = _saving;
+/// <summary>
+/// One of the radio's own files. It writes off the game thread, to a new file that then takes the old one's place, so a
+/// crash mid-write leaves the old one. Writes that come in while one is going collapse into the newest.
+/// </summary>
+internal sealed class SafeFile
+{
+    private readonly string _path;
+    private readonly object _lock = new();
+    private string? _waiting;
+    private Task? _writing;
+    private volatile string? _problem;
 
-        saving?.Wait(wait);
+    public SafeFile(string path) => _path = path;
+
+    public string? Read() => File.Exists(_path) ? File.ReadAllText(_path) : null;
+
+    public void Write(string text)
+    {
+        lock (_lock)
+        {
+            _waiting = text;
+
+            if (_writing != null) return;
+
+            _writing = Task.Run(WriteWaiting);
+        }
+    }
+
+    public string? TakeProblem()
+    {
+        var problem = _problem;
+
+        if (problem != null) _problem = null;
+
+        return problem;
+    }
+
+    public void Finish(TimeSpan wait)
+    {
+        Task? writing;
+
+        lock (_lock) writing = _writing;
+
+        writing?.Wait(wait);
     }
 
     private void WriteWaiting()
     {
         while (true)
         {
-            string json;
+            string text;
 
-            lock (_saveLock)
+            lock (_lock)
             {
-                if (_waitingSave == null)
+                if (_waiting == null)
                 {
-                    _saving = null;
+                    _writing = null;
                     return;
                 }
 
-                json = _waitingSave;
-                _waitingSave = null;
+                text = _waiting;
+                _waiting = null;
             }
 
             try
             {
-                var newFile = _favoritesPath + ".new";
-                File.WriteAllText(newFile, json);
-                File.Move(newFile, _favoritesPath, overwrite: true);
+                var newFile = _path + ".new";
+                File.WriteAllText(newFile, text);
+                File.Move(newFile, _path, overwrite: true);
             }
             catch (Exception ex)
             {
-                _saveProblem = ex.Message;
+                _problem = ex.Message;
             }
         }
     }

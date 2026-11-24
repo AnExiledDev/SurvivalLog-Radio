@@ -2,7 +2,7 @@
 
 Settings live in `BepInEx\config\com.dev.survivallog.radio.cfg`, created the first time the game starts with the mod. Change them in game on the Mod Manager's Mods screen, or edit the file while the game is closed. Changed in game, every setting takes effect at once. Delete the file to get the defaults back. The file describes each setting in English and Simplified Chinese.
 
-With the defaults the radio plays at full volume, keeps playing while you explore, plays songs from `BepInEx\Radio Music`, and gives morale like a record.
+With the defaults the radio plays at full volume, keeps playing while you explore, picks up where you left off when you load a save, plays songs from `BepInEx\Radio Music`, and gives morale like a record.
 
 ## General
 
@@ -10,6 +10,7 @@ With the defaults the radio plays at full volume, keeps playing while you explor
 | --- | --- | --- |
 | `Volume` | `100` | How loud the radio plays, from 0 to 100. The game's music volume turns it down on top of this. The slider on the Radio tab changes this setting too. |
 | `PlayWhileExploring` | `true` | `true` keeps the radio playing when you go out to explore. `false` pauses it when you leave home and turns it back on when you get home. |
+| `ResumeOnLoad` | `true` | `true` plays the station or song you last left playing in a save when you load that save, on the same record player. `false` leaves the radio off after every load, the way records are. |
 | `MusicFolder` | empty | The folder the My music tab plays songs from, subfolders included. Empty uses `BepInEx\Radio Music`, which is made the first time you open that tab. It plays MP3, M4A, AAC, WMA, WAV and FLAC files, and the sound of MP4 videos, up to 5000 songs. A path like `D:\Music` or `%USERPROFILE%\Music` works. |
 
 ## Morale
