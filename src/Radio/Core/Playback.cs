@@ -103,8 +103,11 @@ public sealed class EventQueue
 
     public void Add(PlayerEvent playerEvent)
     {
-        // A game thread that stopped reading must not let this grow forever.
-        if (_events.Count < MaxWaiting) _events.Enqueue(playerEvent);
+        // If the game thread stops reading, this must not grow forever. Giving up and the end
+        // always get in, since a reader sends at most one of them and then stops.
+        var isLast = playerEvent is PlayerEvent.Failed or PlayerEvent.Ended;
+
+        if (isLast || _events.Count < MaxWaiting) _events.Enqueue(playerEvent);
     }
 
     public bool TryTake(out PlayerEvent? playerEvent) => _events.TryDequeue(out playerEvent);
