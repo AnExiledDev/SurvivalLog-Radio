@@ -1,4 +1,4 @@
 # Game versions each version of Radio is known to work on.
 # mod version = game versions, separated by commas
 0.1.0 = 1.1.21271, 1.1.21671
-0.1.1 = 1.1.21671
+0.1.1 = 1.1.21671, 1.1.22055
